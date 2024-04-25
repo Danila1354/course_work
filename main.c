@@ -4,75 +4,11 @@
 #include <string.h>
 #include <math.h>
 #include <getopt.h>
-typedef struct Element{
-    char* key;
-    char* value;
+
+typedef struct Element {
+    char *key;
+    char *value;
 } Element;
-typedef struct {
-    int x, y;
-} Point;
-
-int isInsidePolygon(Point polygon[], int n, Point p) {
-    int i, j, c = 0;
-    for (i = 0, j = n-1; i < n; j = i++) {
-        if (((polygon[i].y > p.y) != (polygon[j].y > p.y)) &&
-            (p.x < (polygon[j].x - polygon[i].x) * (p.y - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x))
-            c = !c;
-    }
-    return c;
-}
-
-int check_coords(int x1, int y1, int x2, int y2,int width,int height) {
-    if (x1<0||x2<0||y1<0 || y2<0 || x1 > x2 || y1 > y2 || (x1>width) || (y1>height)){
-        return 0;
-    }
-    return 1;
-}
-int check_el_in_array(int *array, int el, int size){
-    for (int i = 0; i<size;i++){
-        if (array[i]==el){
-            return 1;
-        }
-    }
-    return 0;
-}
-int find_y_coord(int center_y,int center_x,int x,int radius,int x_for_b,int y_for_b,int option){
-    int y;
-    if (option == 3){
-        int b = y_for_b+(sqrt(3)/3)*x_for_b;
-        y = round((-sqrt(3)/3)*x + (b));
-    }
-    else if (option == 2){
-        int b = y_for_b-(sqrt(3)/3)*x_for_b;
-        y = round((sqrt(3)/3)*x+b);
-    }
-    else if (option == 5){
-        int b = (sqrt(3)/3)*x_for_b - y_for_b;
-        y = round((sqrt(3)/3)*x-b);
-    }
-    else if(option == 6){
-        int b =(-sqrt(3)/3)*x_for_b - y_for_b;
-        y = round((-sqrt(3)/3)*x - (b));
-    }
-    return y;
-}
-int find_x_coord(int center_y,int center_x,int y,int radius,int x_for_b,int y_for_b,int option) {
-    int x;
-    if (option == 3) {
-        int b = y_for_b + (sqrt(3) / 3) * x_for_b;
-        x = round((y-b)/(-sqrt(3) / 3));
-    } else if (option == 2) {
-        int b = y_for_b - (sqrt(3) / 3) * x_for_b;
-        x = round((y-b)/(sqrt(3) / 3));
-    } else if (option == 5) {
-        int b = (sqrt(3) / 3) * x_for_b - y_for_b;
-        x = round((y+b)/(sqrt(3) / 3));
-    } else if (option == 6) {
-        int b = (-sqrt(3) / 3) * x_for_b - y_for_b;
-        x = round((y+b)/(-sqrt(3) / 3));
-    }
-    return x;
-}
 typedef struct PNGImage {
     int width, height; // width and height of the image
     png_byte color_type; // color type of the image
@@ -81,539 +17,21 @@ typedef struct PNGImage {
     png_infop info_ptr; // pointer to the png info struct
     int number_of_passes;
     png_bytep *row_pointers;
-
-
 } PNGImage;
-//void dilation(png_bytep *row_pointers, int x, int y,int thickness,int* colors){
-//    for (int i = 1;i<thickness;i++){
-//        png_byte *ptr1 = &(row_pointers[y][(x-i) * 3]);
-//        png_byte *ptr2 = &(row_pointers[y-i][x * 3]);
-//        png_byte *ptr3 = &(row_pointers[y][(x+i) * 3]);
-//        png_byte *ptr4 = &(row_pointers[y+i][x * 3]);
-//        ptr1[0] = colors[0];
-//        ptr1[1] = colors[1];
-//        ptr1[2] = colors[2];
-//        ptr2[0] = colors[0];
-//        ptr2[1] = colors[1];
-//        ptr2[2] = colors[2];
-//        ptr3[0] = colors[0];
-//        ptr3[1] = colors[1];
-//        ptr3[2] = colors[2];
-//        ptr4[0] = colors[0];
-//        ptr4[1] = colors[1];
-//        ptr4[2] = colors[2];
-//    }
-//}
-void drawThickLine(png_bytep *row_pointers, int x1, int y1, int x2, int y2, int *colors,int* fill_x_array,int* fill_y_array,int* len_x,int* len_y) {
-    int dx = abs(x2 - x1);
-    int dy = abs(y2 - y1);
-    int sx = x1 < x2 ? 1 : -1;
-    int sy = y1 < y2 ? 1 : -1;
-    int err = dx - dy;
-    int e2;
-    int x = x1;
-    int y = y1;
+typedef struct {
+    int x, y;
+} Point;
 
-    while (x != x2 || y != y2) {
-        // set pixel
-        png_byte *ptr = &(row_pointers[y][x * 3]);
-        ptr[0] = colors[0];
-        ptr[1] = colors[1];
-        ptr[2] = colors[2];
-//        dilation(row_pointers,x,y,thickness,colors);
-        if (fill_x_array!=NULL && fill_y_array!=NULL){
-            fill_x_array[(*len_x)] = x;
-            fill_y_array[(*len_y)] = y;
-            (*len_x)++;
-            (*len_y)++;
-        }
-        e2 = 190 * err;
-        if (e2 > -dy) {
-            err -= dy;
-            x += sx;
-        }
-        if (e2 < dx) {
-            err += dx;
-            y += sy;
-        }
+int isInsidePolygon(Point polygon[], int n, Point p) {
+    int i, j, c = 0;
+    for (i = 0, j = n - 1; i < n; j = i++) {
+        if (((polygon[i].y > p.y) != (polygon[j].y > p.y)) &&
+            (p.x < (polygon[j].x - polygon[i].x) * (p.y - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x))
+            c = !c;
     }
-
+    return c;
 }
 
-
-
-// убрать отсюда функцию
-void mirror_image(PNGImage *image, char axis, int x1, int y1, int x2, int y2) {
-    if (check_coords(x1, y1, x2, y2,image->width,image->height)) {
-        if (axis == 'x') {
-            if (y2>image->height){
-                y2 = image->height-1;
-            }
-            if (x2>image->width){
-                x2 = image->width-1;
-            }
-            for (int y = y1; y < y2; y++) {
-                png_byte *row = image->row_pointers[y];
-
-                for (int x = 0; x < (x2) / 2; x++) {
-                    png_byte *ptr1 = &(row[x * 3]);
-
-                    int color1 = ptr1[0];
-                    int color2 = ptr1[1];
-                    int color3 = ptr1[2];
-
-                    png_byte *ptr2 = &(row[(x2 - x) * 3]);
-                    ptr1[0] = ptr2[0];
-                    ptr1[1] = ptr2[1];
-                    ptr1[2] = ptr2[2];
-                    ptr2[0] = color1;
-                    ptr2[1] = color2;
-                    ptr2[2] = color3;
-                }
-            }
-        } else if (axis == 'y') {
-            if (y2>image->height){
-                y2 = image->height-1;
-            }
-            if (x2>image->width){
-                x2 = image->width-1;
-            }
-            for (int y = y1; y < y2 / 2; y++) {
-                png_byte *row = image->row_pointers[y];
-                png_byte *row2 = image->row_pointers[y2 - y - 1];
-                for (int x = 0; x < x2; x++) {
-                    png_byte *ptr1 = &(row[x * 3]);
-                    int color1 = ptr1[0];
-                    int color2 = ptr1[1];
-                    int color3 = ptr1[2];
-                    png_byte *ptr2 = &(row2[x * 3]);
-                    ptr1[0] = ptr2[0];
-                    ptr1[1] = ptr2[1];
-                    ptr1[2] = ptr2[2];
-                    ptr2[0] = color1;
-                    ptr2[1] = color2;
-                    ptr2[2] = color3;
-                }
-            }
-        }
-    }
-}
-
-void draw_rectangle(PNGImage *image, int x1, int y1, int x2, int y2, int thickness, char *color, int fill,
-                    char *fill_color) {
-    if (check_coords(x1, y1, x2, y2,image->width,image->height) == 0) {
-        return;
-    }
-    char* copy_color = strdup(color);
-
-    char *token = strtok(copy_color, ".");
-    int colors[3];
-    for (int i = 0; i < 3; i++) {
-        colors[i] = atoi(token);
-        token = strtok(NULL, ".");
-    }
-    int fill_colors[3];
-    char* copy_fill_color = strdup(fill_color);
-    token = strtok(copy_fill_color, ".");
-    for (int i = 0; i < 3; i++) {
-        fill_colors[i] = atoi(token);
-        token = strtok(NULL, ".");
-    }
-    if (thickness>0){
-        int x1_coord;
-        int y1_coord;
-        int x2_coord;
-        int y2_coord;
-        //draw top line
-        for (int i = 0; i < thickness; i++) {
-            if (x1<0){
-                x1 = 0;
-            }
-            if (y1<0){
-                y1 = 0;
-            }
-            y1_coord = y1 + i;
-            if (y1_coord >= image->height){
-                continue;
-            }
-            x2_coord = x2;
-            if (x2_coord > image->width){
-                x2_coord = image->width;
-            }
-            y2_coord = y1 + i;
-            drawThickLine(image->row_pointers, x1, y1_coord, x2_coord, y2_coord, colors, NULL, NULL, 0, 0);
-        }
-        //draw bottom line
-        for (int i = 0; i < thickness; i++) {
-            y1_coord = y2 - i;
-            if (y1_coord >= image->height || y1_coord<0){
-                continue;
-            }
-            x2_coord = x2;
-            if (x2_coord > image->width){
-                x2_coord = image->width;
-            }
-            y2_coord = y2 - i;
-            drawThickLine(image->row_pointers, x1, y1_coord, x2_coord, y2_coord, colors, NULL, NULL, 0, 0);
-        }
-        // draw left line
-        for (int i = 0; i < thickness; i++) {
-            x1_coord = x1 + i;
-            if (x1_coord >= image->width){
-                continue;
-            }
-            x2_coord = x1 + i;
-            y2_coord = y2+1;
-            if (y2_coord> image->height){
-                y2_coord = image->height;
-            }
-
-            drawThickLine(image->row_pointers, x1_coord, y1, x2_coord, y2_coord, colors, NULL, NULL, 0, 0);
-
-        }
-        // draw right line
-        for (int i = 0; i < thickness; i++) {
-            x1_coord = x2 - i;
-            if (x1_coord >= image->width || x1_coord<0){
-                continue;
-            }
-
-            x2_coord = x2 - i;
-            y2_coord = y2+1;
-            if (y2_coord> image->height){
-                y2_coord = image->height;
-            }
-            drawThickLine(image->row_pointers, x1_coord, y1, x2_coord, y2_coord, colors, NULL, NULL, 0, 0);
-
-        }
-    }
-    if (fill) {
-        for (int y = y1+thickness; y < y2-thickness+1; y++) {
-            png_byte *row;
-            if (y>=image->height){
-                continue;
-            }
-            row = image->row_pointers[y];
-            for (int x = x1+thickness; x < x2-thickness+1; x++) {
-                if (x>=image->width){
-                    continue;
-                }
-                png_byte *ptr = &(row[x * 3]);
-                ptr[0] = fill_colors[0];
-                ptr[1] = fill_colors[1];
-                ptr[2] = fill_colors[2];
-            }
-        }
-    }
-    free(copy_color);
-    free(copy_fill_color);
-
-}
-
-
-
-
-void draw_hexagon(PNGImage *image,int center_x, int center_y, int radius, int thickness, char *color, int fill, char *fill_color) {
-    // check radius and thickness
-    char* copy_color = strdup(color);
-    char *token = strtok(copy_color, ".");
-    int colors[3];
-    for (int i = 0; i < 3; i++) {
-        colors[i] = atoi(token);
-        token = strtok(NULL, ".");
-    }
-    int fill_colors[3];
-    char* copy_fill_color = strdup(fill_color);
-    token = strtok(copy_fill_color, ".");
-    for (int i = 0; i < 3; i++) {
-        fill_colors[i] = atoi(token);
-        token = strtok(NULL, ".");
-    }
-    if (radius%2==1){
-        radius++;
-    }
-
-
-    int x_coords_array[10024];
-    int y_coords_array[10024];
-    int x_array_len = 0;
-    int y_array_len = 0;
-    int x1 = round(center_x - (sqrt(radius*radius - (radius/2)*(radius/2))));
-    int y1 = round(center_y - (radius/2));
-    int x2 = x1;
-    int y2 = round(center_y + (radius/2));
-    int x3 = center_x;
-    int y3 = center_y+radius;
-    int x4 = round(center_x + (sqrt(radius*radius - (radius/2)*(radius/2))));
-    int y4 = round(center_y +(radius/2));
-    int x5 = x4;
-    int y5 = round(center_y - (radius/2));
-    int x6 = center_x;
-    int y6 = center_y - radius;
-    Point hexagon[] = {{x1, y1}, {x2, y2},{x3,y3},{x4,y4},{x5,y5},{x6,y6}};
-    int x1_coord;
-    int y1_coord;
-    int x2_coord;
-    int y2_coord;
-    if (!(y3<0 || x4<0 || y6>=image->height || x1>=image->width || radius<=0)){
-        for (int i = 0;i<thickness;i++){
-            x1_coord = x1+i;
-            y1_coord = y1;
-            hexagon[0].x = x1_coord;
-            hexagon[0].y = y1;
-            if (x1_coord>=image->width || x1_coord<=0){
-                continue;
-            }
-
-            if (y1_coord>=image->height){
-                continue;
-            }
-
-            if (y1_coord<0){
-                y1_coord = 0;
-            }
-            x2_coord = x2+i;
-            if (x2_coord>image->width){
-                x2_coord = image->width;
-            }
-            y2_coord = y2;
-            if (y2_coord>image->height){
-                y2_coord = image->height;
-            }
-            if (y2_coord<0){
-                continue;
-            }
-
-            drawThickLine(image->row_pointers,x1_coord, y1_coord, x2_coord, y2_coord, colors,
-                          x_coords_array, y_coords_array, &x_array_len, &y_array_len);
-
-        }
-        for (int i = 0;i<thickness;i++){
-            x1_coord = x2;
-            y1_coord = y2-i-1;
-            hexagon[1].x = x2+i;
-            hexagon[1].y = y2-1;
-            if (x1_coord>=image->width){
-                continue;
-            }
-            if (y1_coord>=image->height){
-                continue;
-            }
-            if (x1_coord<0){
-                x1_coord = 0;
-                y1_coord = find_y_coord(center_y,center_x,x1_coord,radius,x2,y2-i,2);
-            }
-            if (y1_coord<0){
-                y1_coord = 0;
-                x1_coord = find_x_coord(center_y,center_x,y1_coord,radius,x2,y2-i,2);
-            }
-            x2_coord = x3+1;
-            y2_coord = y3-i+1;
-            if (x2_coord>image->width){
-                x2_coord = image->width;
-                y2_coord = find_y_coord(center_y,center_x,x2_coord,radius,x2,y2-i,2);
-            }
-            if (y2_coord>image->height){
-                y2_coord = image->height;
-                x2_coord = find_x_coord(center_y,center_x,y2_coord,radius,x2,y2-i,2);
-            }
-            if (x2_coord<0){
-                continue;
-            }
-            if (y2_coord<0){
-                continue;
-            }
-
-            drawThickLine(image->row_pointers,x1_coord, y1_coord, x2_coord, y2_coord, colors,
-                          x_coords_array, y_coords_array, &x_array_len, &y_array_len);
-        } // Istoped here --------------------------------------------------------------------------------------------------
-        for (int i = 0;i<thickness;i++){
-            x1_coord = x3;
-            y1_coord = y3-i;
-            hexagon[2].x = x1_coord;
-            hexagon[2].y = y1_coord;
-            if (x1_coord>=image->width){
-                continue;
-            }
-            if (y1_coord>=image->height){
-                y1_coord = image->height-1;
-                x1_coord = find_x_coord(center_y,center_x,y1_coord+1,radius,x3,y3-i,3);
-            }
-            if (x1_coord<0){
-                x1_coord = 0;
-                y1_coord = find_y_coord(center_y,center_x,x1_coord,radius,x3,y3-i,3);
-            }
-            if (y1_coord<0){
-                continue;
-            }
-            x2_coord = x4+1;
-            y2_coord = y4-i-2;
-            if (x2_coord>image->width){
-                x2_coord = image->width;
-                y2_coord = find_y_coord(center_y,center_x,x2_coord,radius,x3,y3-i,3);
-            }
-            if (x2_coord<0){
-                continue;
-            }
-            if (y2_coord<0){
-                y2_coord = -1;
-                x2_coord = find_x_coord(center_y,center_x,y2_coord,radius,x4,y4-i,3);
-            }
-            if (y2_coord>image->height){
-                continue;
-            }
-
-
-            drawThickLine(image->row_pointers,x1_coord, y1_coord, x2_coord, y2_coord, colors,
-                          x_coords_array, y_coords_array, &x_array_len, &y_array_len);
-        }
-        for (int i = 0;i<thickness;i++){
-            x1_coord = x5-i;
-            y1_coord = y5;
-            hexagon[3].x = x4-i;
-            hexagon[3].y = y4-1;
-            if (x1_coord>=image->width || x1_coord<0){
-                continue;
-            }
-            if (y1_coord>image->height){
-                continue;
-            }
-            if (y1_coord<0){
-                y1_coord = 0;
-            }
-            x2_coord = x4-i;
-            y2_coord = y4;
-            if (y2_coord<0){
-                y2_coord = -1;
-            }
-            if (y2_coord>image->height){
-                y2_coord = image->height;
-            }
-            drawThickLine(image->row_pointers,x1_coord, y1_coord, x2_coord, y2_coord, colors,
-                          x_coords_array, y_coords_array, &x_array_len, &y_array_len);
-        }
-        for (int i = 0;i<thickness;i++){
-            x1_coord = x6;
-            y1_coord = y6+i;
-            x2_coord = x5+1;
-            y2_coord = y5+i+1;
-            hexagon[4].x = x5-i;
-            hexagon[4].y = y5;
-            if (x1_coord>=image->width){
-                continue;
-            }
-            if (y1_coord>=image->height){
-                continue;
-            }
-            if (x1_coord<0){
-                x1_coord = 0;
-                y1_coord  = find_y_coord(center_y,center_x,x1_coord,radius,x6,y6+i,5);
-            }
-            if (y1_coord<0){
-                y1_coord = 0;
-                x1_coord = find_x_coord(center_y,center_x,y1_coord,radius,x6,y6+i,5);
-            }
-            if (x2_coord>image->width){
-                x2_coord = image->width;
-                y2_coord = find_y_coord(center_y,center_x,x2_coord,radius,x6,y6+i,5);
-            }
-            if (y2_coord>image->height){
-                y2_coord = image->height;
-                x2_coord = find_x_coord(center_y,center_x,y2_coord,radius,x6,y6+i,5);
-            }
-            if (y2_coord<0){
-                continue;
-            }
-            if (x2_coord<0){
-                x2_coord = -1;
-                y2_coord = find_y_coord(center_y,center_x,x2_coord+1,radius,x5,y5+i,5);
-            }
-
-            drawThickLine(image->row_pointers,x1_coord, y1_coord, x2_coord, y2_coord, colors,
-                          x_coords_array, y_coords_array, &x_array_len, &y_array_len);
-        }
-        for (int i = 0;i<thickness;i++){
-            x1_coord = x6;
-            y1_coord = y6+i;
-            x2_coord = x1-1;
-            y2_coord = y1+i+1;
-            int new_x1_coord;
-            int new_y1_coord;
-            int new_x2_coord;
-            int new_y2_coord;
-            hexagon[5].x = x6;
-            hexagon[5].y = y6+i;
-            if (x1_coord>=image->width){
-                x1_coord = image->width-1;
-                y1_coord = find_y_coord(center_y,center_x,x1_coord+1,radius,x6,y6+i,6);
-            }
-            if (y1_coord>=image->height){
-                continue;
-            }
-            if (x1_coord<0){
-                continue;
-            }
-            if (y1_coord<0){
-                y1_coord = 0;
-                x1_coord = find_x_coord(center_y,center_x,y1_coord,radius,x6,y6+i,6);
-            }
-            if (x2_coord<0){
-                x2_coord = -1;
-                y2_coord = find_y_coord(center_y,center_x,x2_coord+1,radius,x1,y1+i,6);
-            }
-            if (y2_coord<0){
-                continue;
-            }
-            if (x2_coord>image->width){
-                continue;
-            }
-            if (y2_coord>image->height){
-                y2_coord = image->height;
-                x2_coord = find_x_coord(center_y,center_x,y2_coord,radius,x1+i,y1,6);
-            }
-
-            drawThickLine(image->row_pointers,x1_coord, y1_coord, x2_coord, y2_coord, colors,
-                          x_coords_array, y_coords_array, &x_array_len, &y_array_len);
-        }
-
-        if (fill){
-
-            for (int y = y6-1;y<y3+1;y++){
-                for (int x = x1;x<x4+1;x++){
-                    int flag = 0;
-                    Point point = {x, y};
-                    for (int i = 0;i<x_array_len;i++){
-                        if (x==x_coords_array[i] && y==y_coords_array[i]){
-                            flag = 1;
-                            break;
-                        }
-                    }
-                    if (y>=image->height || x>=image->width || y<0 || x<0){
-                        continue;
-                    }
-                    if (flag==0 && isInsidePolygon(hexagon, 6, point)){
-                        png_byte *ptr = &(image->row_pointers[y][x * 3]);
-                        ptr[0] = fill_colors[0];
-                        ptr[1] = fill_colors[1];
-                        ptr[2] = fill_colors[2];
-                    }
-
-                }
-            }
-        }
-    }
-
-
-
-}
-void setPixel(png_bytep *row_pointers, int x, int y) {
-    row_pointers[y][x * 3] = 255;
-    row_pointers[y][x * 3 + 1] = 0;
-    row_pointers[y][x * 3 + 2] = 0;
-}
-void drawCircle(PNGImage *image, int x0, int y0, int radius) {
-
-}
 
 void read_png_file(char *file_name, PNGImage *image) {
     int x, y;
@@ -669,6 +87,7 @@ void read_png_file(char *file_name, PNGImage *image) {
     png_read_image(image->png_ptr, image->row_pointers);
 
 }
+
 //
 void write_png_file(char *file_name, PNGImage *image) {
     FILE *fp = fopen(file_name, "wb");
@@ -688,7 +107,8 @@ void write_png_file(char *file_name, PNGImage *image) {
         // Some error handling: error during writing header
     }
     png_set_IHDR(image->png_ptr, image->info_ptr, image->width, image->height, image->bit_depth, image->color_type,
-                 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+                 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+                 PNG_FILTER_TYPE_BASE);
     png_write_info(image->png_ptr, image->info_ptr);
     if (setjmp(png_jmpbuf(image->png_ptr))) {
         // Some error handling: error during writing bytes
@@ -704,79 +124,482 @@ void write_png_file(char *file_name, PNGImage *image) {
     free(image->row_pointers);
     fclose(fp);
 }
-char* find_value(Element* dict,int len, char* key){
-    for (int i = 0;i<len;i++){
-        if (strcmp(key,dict[i].key)==0){
+
+int check_coords(int x1, int y1, int x2, int y2, int width, int height) {
+    if (x1 < 0 || x2 < 0 || y1 < 0 || y2 < 0 || x1 > x2 || y1 > y2 || (x1 > width) || (y1 > height)) {
+        return 0;
+    }
+    return 1;
+}
+
+
+void drawpixel(PNGImage *image, int x, int y, int *colors) {
+    if (!(x < 0 || y < 0 || x >= image->width || y >= image->height)) {
+        image->row_pointers[y][x * 3] = colors[0];
+        image->row_pointers[y][x * 3 + 1] = colors[1];
+        image->row_pointers[y][x * 3 + 2] = colors[2];
+    }
+}
+
+void drawSquare(PNGImage *image, int x0, int y0, int radius, int *colors) {
+    if (radius % 2 == 0) {
+        radius = radius / 2;
+    } else {
+        radius = (radius + 1) / 2;
+    }
+    int x1 = x0 - radius;
+    int x2 = x0 + radius;
+    int y1 = y0 - radius;
+    int y2 = y0 + radius;
+    for (int x = x1; x < x2 + 1; x++) {
+        for (int y = y1; y < y2 + 1; y++) {
+            drawpixel(image, x, y, colors);
+        }
+    }
+}
+
+void fill_circle(PNGImage *image, int x0, int y0, int r, int *colors, int *fill_x_array,
+                 int *fill_y_array, int *len_x, int *len_y) {
+    int x = 0;
+    int y = r;
+    int delta = 3 - 2 * y;
+    int error = 0;
+    while (y >= x) {
+        drawpixel(image, x0 + x, y0 + y, colors);
+        drawpixel(image, x0 + x, y0 - y, colors);
+        drawpixel(image, x0 - x, y0 + y, colors);
+        drawpixel(image, x0 - x, y0 - y, colors);
+        drawpixel(image, x0 + y, y0 + x, colors);
+        drawpixel(image, x0 + y, y0 - x, colors);
+        drawpixel(image, x0 - y, y0 + x, colors);
+        drawpixel(image, x0 - y, y0 - x, colors);
+        if (fill_x_array != NULL && fill_y_array != NULL) {
+            fill_x_array[(*len_x)++] = x0 + x;
+            fill_y_array[(*len_y)++] = y0 + y;
+            fill_x_array[(*len_x)++] = x0 + x;
+            fill_y_array[(*len_y)++] = y0 - y;
+            fill_x_array[(*len_x)++] = x0 - x;
+            fill_y_array[(*len_y)++] = y0 + y;
+            fill_x_array[(*len_x)++] = x0 - x;
+            fill_y_array[(*len_y)++] = y0 - y;
+            fill_x_array[(*len_x)++] = x0 + y;
+            fill_y_array[(*len_y)++] = y0 + x;
+            fill_x_array[(*len_x)++] = x0 + y;
+            fill_y_array[(*len_y)++] = y0 - x;
+            fill_x_array[(*len_x)++] = x0 - y;
+            fill_y_array[(*len_y)++] = y0 + x;
+            fill_x_array[(*len_x)++] = x0 - y;
+            fill_y_array[(*len_y)++] = y0 - x;
+
+        }
+        delta += delta < 0 ? 4 * x + 6 : 4 * (x - y--) + 10;
+        ++x;
+    }
+    for (int y = -r; y <= r; y++) {
+        for (int x = -r; x <= r; x++) {
+            if (x * x + y * y <= r * r) {
+                drawpixel(image, x0 + x, y0 + y, colors);
+            }
+        }
+    }
+}
+
+
+void draw_circle(PNGImage *image, int x0, int y0, int r, int thickness, int *colors) {
+    int x = 0;
+    int radius;
+    int y = r;
+    int delta = 1 - 2 * r;
+    int error = 0;
+    if (thickness % 2 == 0) {
+        radius = thickness / 2;
+    } else if (thickness == 1) {
+        radius = 0;
+    } else {
+        radius = (thickness + 1) / 2;
+    }
+    while (y >= x) {
+        fill_circle(image, x0 + x, y0 + y, radius, colors, NULL, NULL, 0, 0);
+        fill_circle(image, x0 + x, y0 - y, radius, colors, NULL, NULL, 0, 0);
+        fill_circle(image, x0 - x, y0 + y, radius, colors, NULL, NULL, 0, 0);
+        fill_circle(image, x0 - x, y0 - y, radius, colors, NULL, NULL, 0, 0);
+        fill_circle(image, x0 + y, y0 + x, radius, colors, NULL, NULL, 0, 0);
+        fill_circle(image, x0 + y, y0 - x, radius, colors, NULL, NULL, 0, 0);
+        fill_circle(image, x0 - y, y0 + x, radius, colors, NULL, NULL, 0, 0);
+        fill_circle(image, x0 - y, y0 - x, radius, colors, NULL, NULL, 0, 0);
+//        drawSquare(image, x0 + x, y0 + y, radius, colors);
+//        drawSquare(image, x0 + x, y0 - y, radius, colors);
+//        drawSquare(image, x0 - x, y0 + y, radius, colors);
+//        drawSquare(image, x0 - x, y0 - y, radius, colors);
+//        drawSquare(image, x0 + y, y0 + x, radius, colors);
+//        drawSquare(image, x0 + y, y0 - x, radius, colors);
+//        drawSquare(image, x0 - y, y0 + x, radius, colors);
+//        drawSquare(image, x0 - y, y0 - x, radius, colors);
+        error = 2 * (delta + y) - 1;
+        if ((delta < 0) && (error <= 0)) {
+            delta += 2 * ++x + 1;
+            continue;
+        }
+        if ((delta > 0) && (error > 0)) {
+            delta -= 2 * --y + 1;
+            continue;
+        }
+        delta += 2 * (++x - --y);
+    }
+
+}
+
+void drawThickLine(PNGImage *image, int x1, int y1, int x2, int y2, int thickness, int *colors, int *fill_x_array,
+                   int *fill_y_array, int *len_x, int *len_y) {
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    int sx = x1 < x2 ? 1 : -1;
+    int sy = y1 < y2 ? 1 : -1;
+    int err = dx - dy;
+    int e2;
+    int x = x1;
+    int y = y1;
+
+    while (x != x2 || y != y2) {
+        // set pixel
+
+        drawpixel(image,x,y,colors);
+        if (thickness % 2 == 0) {
+            fill_circle(image, x, y, thickness / 2, colors, fill_x_array, fill_y_array, len_x, len_y);
+        } else if (thickness == 1) {
+            fill_circle(image, x, y, 0, colors, fill_x_array, fill_y_array, len_x, len_y);
+        } else {
+            fill_circle(image, x, y, (thickness + 1) / 2, colors, fill_x_array, fill_y_array, len_x, len_y);
+        }
+
+
+        e2 = 90 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y += sy;
+        }
+    }
+}
+void draw_line_square(PNGImage *image, int x1, int y1, int x2, int y2, int thickness, int *colors){
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+    int sx = x1 < x2 ? 1 : -1;
+    int sy = y1 < y2 ? 1 : -1;
+    int err = dx - dy;
+    int e2;
+    int x = x1;
+    int y = y1;
+
+    while (x != x2 || y != y2) {
+        // set pixel
+
+        png_byte *ptr = &(image->row_pointers[y][x * 3]);
+        ptr[0] = colors[0];
+        ptr[1] = colors[1];
+        ptr[2] = colors[2];
+
+        drawSquare(image, x, y, thickness, colors);
+
+        e2 = 90 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y += sy;
+        }
+    }
+}
+
+
+//void mirror_image(PNGImage *image, char axis, int x1, int y1, int x2, int y2) {
+//    if (check_coords(x1, y1, x2, y2,image->width,image->height)) {
+//        if (axis == 'x') {
+//            if (y2>image->height){
+//                y2 = image->height-1;
+//            }
+//            if (x2>image->width){
+//                x2 = image->width-1;
+//            }
+//            for (int y = y1; y < y2; y++) {
+//                png_byte *row = image->row_pointers[y];
+//
+//                for (int x = 0; x < (x2) / 2; x++) {
+//                    png_byte *ptr1 = &(row[x * 3]);
+//
+//                    int color1 = ptr1[0];
+//                    int color2 = ptr1[1];
+//                    int color3 = ptr1[2];
+//
+//                    png_byte *ptr2 = &(row[(x2 - x) * 3]);
+//                    ptr1[0] = ptr2[0];
+//                    ptr1[1] = ptr2[1];
+//                    ptr1[2] = ptr2[2];
+//                    ptr2[0] = color1;
+//                    ptr2[1] = color2;
+//                    ptr2[2] = color3;
+//                }
+//            }
+//        } else if (axis == 'y') {
+//            if (y2>image->height){
+//                y2 = image->height-1;
+//            }
+//            if (x2>image->width){
+//                x2 = image->width-1;
+//            }
+//            for (int y = y1; y < y2 / 2; y++) {
+//                png_byte *row = image->row_pointers[y];
+//                png_byte *row2 = image->row_pointers[y2 - y - 1];
+//                for (int x = 0; x < x2; x++) {
+//                    png_byte *ptr1 = &(row[x * 3]);
+//                    int color1 = ptr1[0];
+//                    int color2 = ptr1[1];
+//                    int color3 = ptr1[2];
+//                    png_byte *ptr2 = &(row2[x * 3]);
+//                    ptr1[0] = ptr2[0];
+//                    ptr1[1] = ptr2[1];
+//                    ptr1[2] = ptr2[2];
+//                    ptr2[0] = color1;
+//                    ptr2[1] = color2;
+//                    ptr2[2] = color3;
+//                }
+//            }
+//        }
+//    }
+//}
+//
+void draw_rectangle(PNGImage *image, int x1, int y1, int x2, int y2, int thickness, char *color, int fill,
+                    char *fill_color) {
+    // chekc coords
+    char *copy_color = strdup(color);
+
+    char *token = strtok(copy_color, ".");
+    int colors[3];
+    for (int i = 0; i < 3; i++) {
+        colors[i] = atoi(token);
+        token = strtok(NULL, ".");
+    }
+    int fill_colors[3];
+    char *copy_fill_color = strdup(fill_color);
+    token = strtok(copy_fill_color, ".");
+    for (int i = 0; i < 3; i++) {
+        fill_colors[i] = atoi(token);
+        token = strtok(NULL, ".");
+    }
+
+    if (thickness > 0) {
+        drawSquare(image, x1, y1, thickness, colors);
+        drawThickLine(image, x1, y1, x2 + 1, y1, thickness, colors, NULL, NULL, 0, 0);
+        drawSquare(image, x2, y1, thickness, colors);
+        drawThickLine(image, x1, y1, x1, y2 + 1, thickness, colors, NULL, NULL, 0, 0);
+        drawSquare(image, x1, y2, thickness, colors);
+        drawThickLine(image, x1 + 1, y2, x2 + 1, y2, thickness, colors, NULL, NULL, 0, 0);
+        drawSquare(image, x2, y2, thickness, colors);
+        drawThickLine(image, x2, y1 + 1, x2, y2 + 1, thickness, colors, NULL, NULL, 0, 0);
+    }
+    if (fill) {
+        int offset;
+        if (thickness % 2 == 0) {
+            offset = thickness / 2;
+        } else {
+            offset = (thickness - 1) / 2;
+        }
+        for (int y = y1 + offset + 1; y < y2 - offset; y++) {
+            for (int x = x1 + offset + 1; x < x2 - offset; x++) {
+                drawpixel(image, x, y, fill_colors);
+            }
+        }
+    }
+    free(copy_color);
+    free(copy_fill_color);
+
+}
+//
+
+//
+//
+void draw_hexagon(PNGImage *image, int center_x, int center_y, int radius, int thickness, char *color, int fill,
+                  char *fill_color, int iteration) {
+    // check radius and thickness
+    if (radius > 0) {
+        char *copy_color = strdup(color);
+        char *token = strtok(copy_color, ".");
+        int colors[3];
+        for (int i = 0; i < 3; i++) {
+            colors[i] = atoi(token);
+            token = strtok(NULL, ".");
+        }
+        int fill_colors[3];
+        char *copy_fill_color = strdup(fill_color);
+        token = strtok(copy_fill_color, ".");
+        for (int i = 0; i < 3; i++) {
+            fill_colors[i] = atoi(token);
+            token = strtok(NULL, ".");
+        }
+        // remake to dynamic
+        int x_coords_array[10024];
+        int y_coords_array[10024];
+        int x_array_len = 0;
+        int y_array_len = 0;
+
+        int x1 = round(center_x - (sqrt(radius * radius - (radius / 2) * (radius / 2))));
+        int y1 = round(center_y - (radius / 2));
+        int x2 = x1;
+        int y2 = round(center_y + (radius / 2));
+        int x3 = center_x;
+        int y3 = center_y + radius;
+        int x4 = round(center_x + (sqrt(radius * radius - (radius / 2) * (radius / 2))));
+        int y4 = round(center_y + (radius / 2));
+        int x5 = x4;
+        int y5 = round(center_y - (radius / 2));
+        int x6 = center_x;
+        int y6 = center_y - radius;
+        Point hexagon[] = {{x1, y1},
+                           {x2, y2},
+                           {x3, y3},
+                           {x4, y4},
+                           {x5, y5},
+                           {x6, y6}};
+        drawThickLine(image, x1, y1, x2, y2 + 1, thickness, colors, x_coords_array, y_coords_array, &x_array_len,
+                      &y_array_len);
+        drawThickLine(image, x2, y2, x3 + 1, y3 + 1, thickness, colors, x_coords_array, y_coords_array, &x_array_len,
+                      &y_array_len);
+        drawThickLine(image, x3, y3, x4 + 1, y4 - 1, thickness, colors, x_coords_array, y_coords_array, &x_array_len,
+                      &y_array_len);
+        drawThickLine(image, x4, y4, x5, y5 - 1, thickness, colors, x_coords_array, y_coords_array, &x_array_len,
+                      &y_array_len);
+        drawThickLine(image, x5, y5, x6 - 1, y6 - 1, thickness, colors, x_coords_array, y_coords_array, &x_array_len,
+                      &y_array_len);
+        drawThickLine(image, x6, y6, x1 - 1, y1 + 1, thickness, colors, x_coords_array, y_coords_array, &x_array_len,
+                      &y_array_len);
+        if (fill) {
+            for (int y = y6 - 1; y < y3 + 1; y++) {
+                for (int x = x1; x < x4 + 1; x++) {
+                    int flag = 0;
+                    Point point = {x, y};
+                    for (int i = 0; i < x_array_len; i++) {
+                        if (x == x_coords_array[i] && y == y_coords_array[i]) {
+                            flag = 1;
+                            break;
+                        }
+                    }
+                    if (y >= image->height || x >= image->width || y < 0 || x < 0) {
+                        continue;
+                    }
+                    if (flag == 0 && isInsidePolygon(hexagon, 6, point)) {
+                        png_byte *ptr = &(image->row_pointers[y][x * 3]);
+                        ptr[0] = fill_colors[0];
+                        ptr[1] = fill_colors[1];
+                        ptr[2] = fill_colors[2];
+                    }
+
+                }
+            }
+        }
+    }
+}
+void pentagram(PNGImage *image,int center_x, int center_y,int radius,int thickness,int* colors){
+    draw_circle(image,center_x,center_y,radius,thickness,colors);
+    int x1 = center_x;
+    int y1 = center_y - radius;
+    int x2 = center_x + radius * sin(0.2 * M_PI);
+    int y2 = center_y + radius * cos(0.2 * M_PI);
+
+    int x3 = center_x - radius * sin(0.2 * M_PI);
+    int y3 = center_y + radius * cos(0.2 * M_PI);
+
+    int x4 = center_x + radius * sin(0.4 * M_PI);
+    int y4 = center_y - radius * cos(0.4 * M_PI);
+
+    int x5 = center_x - radius * sin(0.4 * M_PI);
+    int y5 = center_y - radius * cos(0.4 * M_PI);
+
+    drawThickLine(image,x1,y1,x2+1,y2+1,thickness,colors,NULL,NULL,0,0);
+    drawThickLine(image,x5,y5,x2+1,y2+1,thickness,colors,NULL,NULL,0,0);
+    drawThickLine(image,x5,y5,x4+1,y4,thickness,colors,NULL,NULL,0,0);
+    drawThickLine(image,x4,y4,x3-1,y3+1,thickness,colors,NULL,NULL,0,0);
+    drawThickLine(image,x1,y1,x3-1,y3+1,thickness,colors,NULL,NULL,0,0);
+
+
+}
+
+
+char *find_value(Element *dict, int len, char *key) {
+    for (int i = 0; i < len; i++) {
+        if (strcmp(key, dict[i].key) == 0) {
             return dict[i].value;
         }
     }
 }
 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     int last_index = 0;
-    const char* short_options = "i:o:h";
-    Element* dict = malloc(sizeof(Element)*100);
+    const char *short_options = "i:o:h";
+    Element *dict = malloc(sizeof(Element) * 100);
     int len_dict = 0;
 
 
     const struct option long_options[] = {
-            { "input", required_argument, NULL, 'i' },
-            { "output", required_argument, NULL, 'o' },
-            { "info", no_argument, NULL, 1 },
-            { "help", no_argument, NULL, 'h' },
-            { "mirror", no_argument, NULL, 0 },
-            { "axis", required_argument, NULL, 0 },
-            { "left_up", required_argument, NULL, 0 },
-            { "right_down", required_argument, NULL, 0 },
-            { "pentagram", no_argument, NULL, 0 },
-            { "center", required_argument, NULL, 0 },
-            { "radius", required_argument, NULL, 0 },
-            { "thickness", required_argument, NULL, 0 },
-            { "color", required_argument, NULL, 0 },
-            { "fill", required_argument, NULL, 0 },
-            { "fill_color", required_argument, NULL, 0 },
-            { "hexagon", no_argument, NULL, 0 },
-            { NULL, 0, NULL, 0 }
+            {"input",      required_argument, NULL, 'i'},
+            {"output",     required_argument, NULL, 'o'},
+            {"info",       no_argument,       NULL, 1},
+            {"help",       no_argument,       NULL, 'h'},
+            {"mirror",     no_argument,       NULL, 0},
+            {"axis",       required_argument, NULL, 0},
+            {"left_up",    required_argument, NULL, 0},
+            {"right_down", required_argument, NULL, 0},
+            {"pentagram",  no_argument,       NULL, 0},
+            {"center",     required_argument, NULL, 0},
+            {"radius",     required_argument, NULL, 0},
+            {"thickness",  required_argument, NULL, 0},
+            {"color",      required_argument, NULL, 0},
+            {"fill",       required_argument, NULL, 0},
+            {"fill_color", required_argument, NULL, 0},
+            {"hexagon",    no_argument,       NULL, 0},
+            {NULL, 0,                         NULL, 0}
     };
 
     int option;
     int option_index = 0;
-    char* option_name;
+    char *option_name;
 
-    while ((option=getopt_long(argc,argv,short_options,
-                            long_options,&option_index))!=-1){
+    while ((option = getopt_long(argc, argv, short_options,
+                                 long_options, &option_index)) != -1) {
 
         if (option == '?') {
             printf("unknown option\n");
             continue;
         }
-        if (option == '1'){
-            printf("%s\n",optarg);
+        if (option == '1') {
+            printf("%s\n", optarg);
         }
 
         option_name = strdup(long_options[option_index].name);
-        if (optarg!=NULL){
+        if (optarg != NULL) {
             dict[len_dict].key = option_name;
             dict[len_dict++].value = optarg;
-        }
-        else{
+        } else {
             dict[len_dict].key = option_name;
             dict[len_dict++].value = "";
         }
     };
     int input_flag = 0;
-    for (int i = 0;i<len_dict;i++){
-        if (strcmp("input",dict[i].key)==0){
+    for (int i = 0; i < len_dict; i++) {
+        if (strcmp("input", dict[i].key) == 0) {
             input_flag = 1;
         }
     }
-    if (input_flag==0){
-        if (optind<argc){
+    if (input_flag == 0) {
+        if (optind < argc) {
             dict[len_dict].key = "input";
-            dict[len_dict++].value = argv[optind-1];
-        }
-        else{
+            dict[len_dict++].value = argv[optind - 1];
+        } else {
             printf("Не передано имя входного файла\n");
         }
     }
@@ -787,17 +610,34 @@ int main(int argc, char* argv[]) {
 //    drawCircle(&image,500,500,20);
 
 
-//    char *color = "0.255.0";
-//    char *fill_color = "0.0.128";
-    int colors[] = {0,255,255};
-    drawThickLine(image.row_pointers,100,100,200,200,colors,NULL,NULL,0,0);
-//    drawThickLine(image.row_pointers,99,100,250,400,colors,NULL,NULL,0,0);
+    char *color = "0.255.0";
+    char *fill_color = "0.0.128";
+    int colors[] = {0, 255, 255};
+    colors[1] = 0;
+    colors[2] = 0;
+    colors[0] = 255;
+//    drawSquare(&image,500,500,5,colors);
+//    drawThickLine(&image,100,100,200,200,2,colors,NULL,NULL,0,0);
+//    fill_circle(&image,500,500,2,colors);
 //    drawThickLine(image.row_pointers,100,99,250,400,colors,NULL,NULL,0,0);
-
-//    draw_rectangle(&image, 10, 10, 100, 100, 4, color, 1, fill_color);
-//    drawThickLine(image.row_pointers,0,0,1912,1226,colors);
+//    draw_rectangle(&image, 10, 10, 100, 200, 5, color, 1, fill_color);
 //    mirror_image(&image, 'x', 30, 30, 1920, 1226);
-//    draw_hexagon(&image, 500, 20, 26, 20, color, 1, fill_color);
+//    draw_hexagon(&image, 1910, 500, 20, 4, color, 1, fill_color,0);
+    color = "128.0.0";
+//    draw_hexagon(&image, 500, 500, 16, 2, color, 0, fill_color,0);
+//    draw_hexagon(&image, 500, 500, 15, 2, color, 0, fill_color,0);
+//    draw_hexagon(&image, 500, 500, 15, 1, color, 0, fill_color,0);
+//    draw_hexagon(&image, 500, 500, 14, 3, color, 0, fill_color,0);
+//    draw_hexagon(&image, 500, 500, 13, 1, color, 0, fill_color,0);
+//    draw_hexagon(&image, 500, 500, 12, 1, color, 0, fill_color,0);
+//    draw_hexagon(&image, 500, 500, 11, 1, color, 0, fill_color,0);
+//    draw_hexagon(&image, 500, 500, 11, 1, color, 0, fill_color,0);
+//    draw_circle(&image, 200, 500, 30, 9, colors);
+    pentagram(&image,1000,500,300,15,colors);
+//    draw_line_square(&image,100,100,200,200,2,colors);
+//    drawThickLine(&image,0,0,1000,1000,3,colors,NULL,NULL,0,0);
+//    fill_circle(&image,1000,1000,4,colors,NULL,NULL,0,0);
+//    drawSquare(&image,500,500,3,colors);
     write_png_file("/Users/danilapachev/Desktop/projects/course_work/out.png", &image);
 
     return 0;
