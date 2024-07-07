@@ -313,7 +313,9 @@ void run(Element *dict, int len_dict) {
                    "--hexagon - draws hexagon (use with:\n"
                    "  --center, --radius, --thickness and --color (check desc. in --pentagram flag))\n"
                    "--outside_ornament - expands the image and draws a frame (use with:\n"
-                   "  --thickness and --color (check desc in --rect flag))\n");
+                   "  --thickness and --color (check desc in --rect flag))\n\n"
+                   "For example: ./cw --input ./img.png --output ./new_img.png --pentagram --center 100.100 --radius 50"
+                   " --thickness 12 --color 255.0.0");
         }
     }
 }
