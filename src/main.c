@@ -6,14 +6,17 @@
 #include "drawing_line_functions.h"
 #include "input_functions.h"
 
+
+
 int main(int argc, char *argv[]) {
-    const char *short_options = "i:o:h";
+    const char *short_options = "hi:o:";
     Element *dict = malloc(sizeof(Element) * 200);
     int len_dict = 0;
+
     const struct option long_options[] = {
             {"input",      required_argument, NULL, 'i'},
             {"output",     required_argument, NULL, 'o'},
-            {"info",       no_argument,       NULL, 1},
+            {"info",       no_argument,       NULL, 0},
             {"help",       no_argument,       NULL, 'h'},
             {"mirror",     no_argument,       NULL, 0},
             {"axis",       required_argument, NULL, 0},
@@ -28,29 +31,34 @@ int main(int argc, char *argv[]) {
             {"fill_color", required_argument, NULL, 0},
             {"rect",       no_argument,       NULL, 0},
             {"hexagon",    no_argument,       NULL, 0},
-            {NULL, 0,NULL, 0}
+            {"outside_ornament", no_argument, NULL, 0},
+            {0, 0, 0, 0}
     };
-
     int option;
     int option_index = 0;
-    char *option_name;
 
-    while ((option = getopt_long(argc, argv, short_options,
-                                 long_options, &option_index)) != -1) {
+    while ((option = getopt_long(argc, argv, short_options, long_options, &option_index)) != -1) {
         if (option == '?') {
             printf("unknown option - %s\n", argv[optind - 1]);
             continue;
         }
-        option_name = strdup(long_options[option_index].name);
-        // save option and value
-        if (optarg != NULL) {
-            dict[len_dict].key = option_name;
-            dict[len_dict++].value = optarg;
+
+        const char *option_name = NULL;
+        if (option == 0) {
+            option_name = long_options[option_index].name;
         } else {
-            dict[len_dict].key = option_name;
-            dict[len_dict++].value = "";
+            for (int i = 0; long_options[i].name != NULL; i++) {
+                if (long_options[i].val == option) {
+                    option_name = long_options[i].name;
+                    break;
+                }
+            }
         }
-    };
+        if (option_name != NULL) {
+            dict[len_dict].key = strdup(option_name);
+            dict[len_dict++].value = optarg != NULL ? optarg : "";
+        }
+    }
     int input_flag = 0;
     for (int i = 0; i < len_dict; i++) {
         if (strcmp("input", dict[i].key) == 0) {
@@ -64,7 +72,10 @@ int main(int argc, char *argv[]) {
         }
     }
     run(dict, len_dict);
+    for (int i = 0; i < len_dict; i++) {
+        free(dict[i].key);
+    }
     free(dict);
 
-    return 0;
+
 }

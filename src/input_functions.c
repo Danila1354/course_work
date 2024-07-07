@@ -5,6 +5,7 @@ char *find_value(Element *dict, int len, char *key) {
             return dict[i].value;
         }
     }
+    return "";
 }
 void check_output_and_input_match(char* input, char* output){
     if (strcmp(input,output)==0){
@@ -13,8 +14,8 @@ void check_output_and_input_match(char* input, char* output){
     }
 }
 int check_extra_option(Element *dict, int len_dict) {
-    int len_main_options = 6;
-    char *main_options[] = {"mirror", "pentagram", "rect", "hexagon", "info", "input"};
+    int len_main_options = 7;
+    char *main_options[] = {"mirror", "pentagram", "rect", "hexagon", "info", "input", "outside_ornament"};
     int count_main_options = 0;
     for (int i = 0; i < len_dict; i++) {
         for (int j = 0; j < len_main_options; j++) {
@@ -29,7 +30,8 @@ int check_extra_option(Element *dict, int len_dict) {
 void check_flags(Element *dict, int len_dict, int *input_flag, int *output_flag, int *info_flag, int *help_flag, int *
 mirror_flag, int *axis_flag,
                  int *left_up_flag, int *right_down_flag, int *pentagram_flag, int *center_flag, int *radius_flag, int *
-thickness_flag, int *color_flag, int *fill_flag, int *fill_color_flag, int *rect_flag, int *hexagon_flag) {
+thickness_flag, int *color_flag, int *fill_flag, int *fill_color_flag, int *rect_flag, int *hexagon_flag, int*
+outside_ornament_flag) {
 
     for (int i = 0; i < len_dict; i++) {
         if (strcmp("input", dict[i].key) == 0) {
@@ -65,6 +67,9 @@ thickness_flag, int *color_flag, int *fill_flag, int *fill_color_flag, int *rect
         } else if (strcmp("hexagon", dict[i].key) == 0) {
             *hexagon_flag = 1;
         }
+        else if (strcmp("outside_ornament", dict[i].key) == 0) {
+            *outside_ornament_flag = 1;
+        }
         else if (strcmp("output", dict[i].key) == 0) {
             *output_flag = 1;
         }
@@ -73,14 +78,12 @@ thickness_flag, int *color_flag, int *fill_flag, int *fill_color_flag, int *rect
 char *find_main_option(Element *dict, int len_dict, int *input_flag, int *output_flag, int *info_flag, int *help_flag, int *
 mirror_flag,int *axis_flag, int *left_up_flag, int *right_down_flag, int *pentagram_flag, int
                        *center_flag, int *radius_flag, int *thickness_flag, int *color_flag, int *fill_flag, int
-                       *fill_color_flag, int *rect_flag, int *hexagon_flag) {
+                       *fill_color_flag, int *rect_flag, int *hexagon_flag, int* outside_ornament_flag) {
     check_flags(dict, len_dict, input_flag, output_flag, info_flag, help_flag, mirror_flag, axis_flag,
                 left_up_flag, right_down_flag, pentagram_flag, center_flag, radius_flag,
-                thickness_flag, color_flag, fill_flag, fill_color_flag, rect_flag, hexagon_flag);
+                thickness_flag, color_flag, fill_flag, fill_color_flag, rect_flag, hexagon_flag,outside_ornament_flag);
     int count_main_options = check_extra_option(dict, len_dict);
     if (count_main_options == 2) {
-
-        // переделать проверки
         if ((*mirror_flag)==1) {
             if ((*axis_flag)==1 && (*left_up_flag==1) && (*right_down_flag)==1 && (*output_flag)==1 && (*input_flag)
                                                                                                        ==1){
@@ -144,17 +147,28 @@ mirror_flag,int *axis_flag, int *left_up_flag, int *right_down_flag, int *pentag
                 fprintf(stderr, "Недостаточное количество флагов для функции hexagon\n");
                 exit(41);
             }
-        } else if ((*info_flag)==1) {
+        }
+        else if ((*outside_ornament_flag)==1) {
+            if ((*thickness_flag)==1 && (*color_flag)==1  && (*output_flag)==1 && (*input_flag)==1){
+                check_thickness(find_value(dict, len_dict, "thickness"));
+                check_color(find_value(dict, len_dict, "color"));
+                check_output_and_input_match(find_value(dict, len_dict, "input"), find_value(dict, len_dict, "output"));
+                return "outside_ornament";
+            } else {
+                fprintf(stderr, "Недостаточное количество флагов для функции outside_ornament\n");
+                exit(41);
+            }
+        }
+        else if ((*info_flag)==1) {
             return "info";
         }
     } else if (count_main_options > 2) {
         fprintf(stderr, "Можно выполнить только 1 основную функцию, а не несколько\n");
         exit(41);
-    } else {
-        return "Not main option";
     }
-}
+    return "Not main option";
 
+}
 
 
 void run(Element *dict, int len_dict) {
@@ -175,10 +189,14 @@ void run(Element *dict, int len_dict) {
     int fill_color_flag = 0;
     int rect_flag = 0;
     int hexagon_flag = 0;
+    int outside_ornament_flag = 0;
 
-    char *main_option = find_main_option(dict, len_dict, &input_flag, &output_flag, &info_flag, &help_flag, &mirror_flag, &axis_flag,
-                                         &left_up_flag, &right_down_flag, &pentagram_flag, &center_flag, &radius_flag, &thickness_flag, &color_flag,
-                                         &fill_flag, &fill_color_flag, &rect_flag, &hexagon_flag);
+    char *main_option = find_main_option(dict, len_dict, &input_flag, &output_flag, &info_flag, &help_flag, &mirror_flag,
+                                         &axis_flag,
+                                         &left_up_flag, &right_down_flag, &pentagram_flag, &center_flag,
+                                         &radius_flag, &thickness_flag, &color_flag,
+                                         &fill_flag, &fill_color_flag, &rect_flag, &hexagon_flag,
+                                         &outside_ornament_flag);
 
     if (strcmp(main_option, "mirror") == 0) {
         PNGImage image;
@@ -188,7 +206,8 @@ void run(Element *dict, int len_dict) {
         char *right_down = find_value(dict, len_dict, "right_down");
         int *left_up_coords = parse_coords(left_up);
         int *right_down_coords = parse_coords(right_down);
-        mirror_image(&image, axis[0], left_up_coords[0], left_up_coords[1], right_down_coords[0], right_down_coords[1]);
+        mirror_image(&image, axis[0], left_up_coords[0], left_up_coords[1], right_down_coords[0],
+                     right_down_coords[1]);
         write_png_file(find_value(dict, len_dict, "output"), &image);
         free(left_up_coords);
         free(right_down_coords);
@@ -202,7 +221,8 @@ void run(Element *dict, int len_dict) {
         char *color = find_value(dict, len_dict, "color");
         int *center_coords = parse_coords(center);
         int *colors = parse_color(color);
-        draw_pentagram(&image,center_coords[0],center_coords[1],atoi(radius),atoi(thickness),colors);
+        draw_pentagram(&image,center_coords[0],center_coords[1],atoi(radius),
+                       atoi(thickness),colors);
         write_png_file(find_value(dict, len_dict, "output"), &image);
         free(center_coords);
         free(colors);
@@ -221,7 +241,8 @@ void run(Element *dict, int len_dict) {
         int *left_up_coords = parse_coords(left_up);
         int *right_down_coords = parse_coords(right_down);
 
-        draw_rectangle(&image,left_up_coords[0],left_up_coords[1],right_down_coords[0],right_down_coords[1],atoi
+        draw_rectangle(&image,left_up_coords[0],left_up_coords[1],right_down_coords[0],
+                       right_down_coords[1],atoi
                 (thickness),color,fill_flag,fill_color);
         write_png_file(find_value(dict, len_dict, "output"), &image);
         free(left_up_coords);
@@ -242,7 +263,16 @@ void run(Element *dict, int len_dict) {
             fill_color = find_value(dict, len_dict, "fill_color");
         }
         int *center_coords = parse_coords(center);
-        draw_hexagon(&image,center_coords[0],center_coords[1],atoi(radius),atoi(thickness),color,fill,fill_color);
+        draw_hexagon(&image,center_coords[0],center_coords[1],atoi(radius),
+                     atoi(thickness),color,fill,fill_color);
+        write_png_file(find_value(dict, len_dict, "output"), &image);
+    }
+    else if(strcmp(main_option,"outside_ornament")==0){
+        PNGImage image;
+        read_png_file(find_value(dict, len_dict, "input"), &image);
+        char *thickness = find_value(dict, len_dict, "thickness");
+        char *color = find_value(dict, len_dict, "color");
+        outside_ornament(&image,atoi(thickness),color);
         write_png_file(find_value(dict, len_dict, "output"), &image);
     }
     else if(strcmp(main_option,"info")==0){
@@ -255,7 +285,35 @@ void run(Element *dict, int len_dict) {
     }
     else{
         if (help_flag){
-            printf("Course work for option 5.15, created by Danila Pachev.\n");
+            printf("Course work for option 5.15, created by Danila Pachev.\n\n"
+                   "This program allows you to process PNG images\n"
+                   "Available flags\n\n"
+                   "--help or -h - shows help information\n"
+                   "--info (use with --input) - shows information about image\n"
+                   "--input or -i is used to specify the path to the input image. After using this flag, "
+                   "you should provide the path to the original image as its argument.\n"
+                   "--output or -o is used to specify the output path for the image. After using this flag, "
+                   "you need to provide the path for saving the new image as an argument.\n\n"
+                   "--mirror - reflects a specified image region across a chosen axis (use with:\n"
+                   "  --left_up - takes coords of the top-left corner of an area in the format X.Y\n"
+                   "  --right_down - takes coords the right-down corner of an area in the format X.Y\n"
+                   "  --axis - takes the axis relative to which you want to reflect)\n"
+                   "--rect - draws a rectangle at given coordinates (use with:\n"
+                   "  --left_up and --right_down (check desc. in --mirror flag)\n"
+                   "  --thickness - takes line thickness\n"
+                   "  --color - takes line color in the format R.G.B\n"
+                   "  --fill (not necessary) - fill rectangle (use without argument like '--fill'\n"
+                   "  --fill_color (not necessary) - if you use flag --fill, you need to specify fill color int the "
+                   "format R.G.B)\n"
+                   "--pentagram - draws pentagram in the circle (use with:\n"
+                   "  --center - takes the coords of the center of the circle into which the pentagram needs to be "
+                   "inscribed in the format X.Y\n"
+                   "  --radius - takes radius of the circle\n"
+                   "  --thickness and --color (check desc. in --rect flag))\n"
+                   "--hexagon - draws hexagon (use with:\n"
+                   "  --center, --radius, --thickness and --color (check desc. in --pentagram flag))\n"
+                   "--outside_ornament - expands the image and draws a frame (use with:\n"
+                   "  --thickness and --color (check desc in --rect flag))\n");
         }
     }
 }
